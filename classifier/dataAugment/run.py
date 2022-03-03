@@ -32,15 +32,22 @@ def augment(path):
         A.Rotate(limit=180, border_mode=cv2.BORDER_CONSTANT, value=padding, p=0.5),
         A.Affine(shear=(-20, 20), cval=padding, p=0.5),
         A.Perspective(pad_mode=cv2.BORDER_CONSTANT, pad_val=padding, p=0.5),
-        # A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.5),
-        # A.RandomRain(p=0.5),
+        A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.5),
+        A.HueSaturationValue(hue_shift_limit=1, p=0.5),
         A.Emboss(p=0.5),
-        A.Equalize(p=0.5),
+        A.CLAHE(clip_limit=100, p=0.5),
+        A.GaussianBlur(p=0.5),
+        A.GaussNoise(p=0.5),
+        A.RandomFog(fog_coef_lower=0.1, fog_coef_upper=0.5, p=0.3),
+        A.RandomRain(p=0.3),
     ])
     results = []
     for i in range(100):
-        one = capricious(image=image)["image"]
-        results.append(one)
+        try:
+            one = capricious(image=image)["image"]
+            results.append(one)
+        except:
+            pass
     save(results, path)
 
 
@@ -68,5 +75,5 @@ def delete(root):
 
 
 if __name__ == "__main__":
-    main("C:/Users/Dell/Desktop/trail")
-    # delete("C:/Users/Dell/Desktop/trail")
+    main("F:/CarLogo/crawler/chelogo")
+    # delete("F:/CarLogo/crawler/chelogo")
