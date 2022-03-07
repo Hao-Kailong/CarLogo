@@ -1,6 +1,6 @@
 # https://keras.io/examples/vision/image_classification_from_scratch/
 # Xception Model
-import keras
+from tensorflow import keras
 import os
 from keras import layers
 import tensorflow as tf
