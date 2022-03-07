@@ -50,7 +50,7 @@ class BasicLoader(object):
         for i in range(self.start_id, len(self.data_array), self.batch_size):
             batch = self.data_array[i:i+self.batch_size]
             imgs, ids = zip(*batch)
-            yield (imgs, ids)
+            yield tuple(imgs), tuple(ids)
 
     def reset(self):
         self.start_id = 0
@@ -123,7 +123,7 @@ def train():
         metrics=[tf.keras.metrics.Accuracy()],
     )
     model.fit(
-        x=loader.gen(), batch_size=config["batch_size"], epochs=config["epoch"], callbacks=callbacks, validation_data=([], []),
+        x=loader.gen(), epochs=config["epoch"], callbacks=callbacks, validation_data=([], []),
     )
 
 
