@@ -25,6 +25,7 @@ class BasicLoader(object):
         self.start_id = 0
         self.label2data, self.label2id, self.id2label, self.num_class, self.data_array = self.load()
         print("Data Loaded.")
+        self.num_class = len(self.label2id)
 
     def load(self):
         label2data = defaultdict(list)
@@ -56,6 +57,9 @@ class BasicLoader(object):
 
     def shuffle(self):
         random.shuffle(self.data_array)
+
+    def get_num_class(self):
+        return self.num_class
 
 
 def make_model(input_shape, num_classes):
@@ -109,6 +113,7 @@ def make_model(input_shape, num_classes):
 
 def train():
     loader = BasicLoader(config["data_root"], config["batch_size"])
+    model = make_model(input_shape=(160, 200, 3), num_classes=loader.get_num_class())
     callbacks = [
         keras.callbacks.ModelCheckpoint("save_at_{epoch}.h5"),
     ]
