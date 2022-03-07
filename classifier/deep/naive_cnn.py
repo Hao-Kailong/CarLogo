@@ -123,7 +123,7 @@ def train():
         metrics=[tf.keras.metrics.Accuracy()],
     )
     model.fit(
-        loader.gen(), epochs=config["epoch"], callbacks=callbacks, validation_data=None,
+        x=loader.gen(), batch_size=config["batch_size"], epochs=config["epoch"], callbacks=callbacks, validation_data=None,
     )
 
 
