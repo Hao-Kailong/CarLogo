@@ -8,11 +8,11 @@ import matplotlib.pyplot as plt
 import cv2
 from collections import defaultdict
 import random
+import argparse
 
 
 config = {
     "batch_size": 32,
-    "data_root": "F:/CarLogo/crawler/chelogo",
     "epoch": 50,
     "lr": 1e-3,
 }
@@ -132,6 +132,12 @@ def predict():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root", default="F:/CarLogo/crawler/chelogo/")
+    args = parser.parse_args()
+
+    config["data_root"] = args.root
+
     train()
 
 
