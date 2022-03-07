@@ -2,13 +2,12 @@
 # Xception Model
 from tensorflow import keras
 import os
-from keras import layers
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import cv2
 from collections import defaultdict
-import random
 import argparse
+import numpy as np
 
 
 config = {
@@ -23,7 +22,7 @@ class BasicLoader(object):
         self.root = root
         self.batch_size = batch_size
         self.start_id = 0
-        self.label2data, self.label2id, self.id2label, self.num_class, self.data_array = self.load()
+        self.label2data, self.label2id, self.id2label, self.num_class, self.X, self.Y = self.load()
         print("Data Loaded.")
         self.num_class = len(self.label2id)
 
@@ -39,66 +38,67 @@ class BasicLoader(object):
                     image = plt.imread(path)
                     if len(image.shape) == 2:
                         image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+                    if image.shape != (160, 200, 3):
+                        image = cv2.resize(image, dsize=(200, 160))
+                    assert image.shape == (160, 200, 3)
                     label2data[d].append(image)
         label2id = {label: i for i, label in enumerate(label2data.keys())}
         id2label = {i: label for i, label in enumerate(label2data.keys())}
         num_class = len(label2id)
-        data_array = [(img, label2id[label]) for label, data in label2data.items() for img in data]
-        return label2data, label2id, id2label, num_class, data_array
-
-    def gen(self):
-        for i in range(self.start_id, len(self.data_array), self.batch_size):
-            batch = self.data_array[i:i+self.batch_size]
-            imgs, ids = zip(*batch)
-            yield tuple(imgs), tuple(ids)
-
-    def reset(self):
-        self.start_id = 0
-
-    def shuffle(self):
-        random.shuffle(self.data_array)
+        X = [img for label, data in label2data.items() for img in data]
+        Y = [label2id[label] for label, data in label2data.items() for img in data]
+        return label2data, label2id, id2label, num_class, X, Y
 
     def get_num_class(self):
         return self.num_class
+
+    def get_X(self):
+        return np.asarray(self.X)
+
+    def get_Y(self):
+        return keras.utils.to_categorical(np.asarray(self.Y), num_classes=self.num_class)
+
+    def get_len(self):
+        return len(self.X)
 
 
 def make_model(input_shape, num_classes):
     inputs = keras.Input(shape=input_shape)
 
     # Entry block
-    x = layers.Conv2D(32, 3, strides=2, padding="same")(inputs)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    x = keras.layers.Conv2D(32, 3, strides=2, padding="same")(inputs)
+    x = keras.layers.BatchNormalization()(x)
+    x = keras.layers.Activation("relu")(x)
 
-    x = layers.Conv2D(64, 3, padding="same")(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    x = keras.layers.Conv2D(64, 3, padding="same")(x)
+    x = keras.layers.BatchNormalization()(x)
+    x = keras.layers.Activation("relu")(x)
 
     previous_block_activation = x  # Set aside residual
 
     for size in [128, 256, 512, 728]:
-        x = layers.Activation("relu")(x)
-        x = layers.SeparableConv2D(size, 3, padding="same")(x)
-        x = layers.BatchNormalization()(x)
+        x = keras.layers.Activation("relu")(x)
+        x = keras.layers.SeparableConv2D(size, 3, padding="same")(x)
+        x = keras.layers.BatchNormalization()(x)
 
-        x = layers.Activation("relu")(x)
-        x = layers.SeparableConv2D(size, 3, padding="same")(x)
-        x = layers.BatchNormalization()(x)
+        x = keras.layers.Activation("relu")(x)
+        x = keras.layers.SeparableConv2D(size, 3, padding="same")(x)
+        x = keras.layers.BatchNormalization()(x)
 
-        x = layers.MaxPooling2D(3, strides=2, padding="same")(x)
+        x = keras.layers.MaxPooling2D(3, strides=2, padding="same")(x)
 
         # Project residual
-        residual = layers.Conv2D(size, 1, strides=2, padding="same")(
+        residual = keras.layers.Conv2D(size, 1, strides=2, padding="same")(
             previous_block_activation
         )
-        x = layers.add([x, residual])  # Add back residual
+        x = keras.layers.add([x, residual])  # Add back residual
         previous_block_activation = x  # Set aside next residual
 
-    x = layers.SeparableConv2D(1024, 3, padding="same")(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    x = keras.layers.SeparableConv2D(1024, 3, padding="same")(x)
+    x = keras.layers.BatchNormalization()(x)
+    x = keras.layers.Activation("relu")(x)
 
-    x = layers.GlobalAveragePooling2D()(x)
+    x = keras.layers.GlobalAveragePooling2D()(x)
     if num_classes == 2:
         activation = "sigmoid"
         units = 1
@@ -106,8 +106,8 @@ def make_model(input_shape, num_classes):
         activation = "softmax"
         units = num_classes
 
-    x = layers.Dropout(0.5)(x)
-    outputs = layers.Dense(units, activation=activation)(x)
+    x = keras.layers.Dropout(0.5)(x)
+    outputs = keras.layers.Dense(units, activation=activation)(x)
     return keras.Model(inputs, outputs)
 
 
@@ -119,11 +119,18 @@ def train():
     ]
     model.compile(
         optimizer=keras.optimizers.Adam(config["lr"]),
-        loss=tf.keras.losses.CategoricalCrossentropy(),
+        loss="categorical_crossentropy",
         metrics=[tf.keras.metrics.Accuracy()],
     )
+    steps_per_epoch = loader.get_len() // config["batch_size"]
     model.fit(
-        x=loader.gen(), epochs=config["epoch"], callbacks=callbacks, validation_data=([], []),
+        x=loader.get_X(),
+        y=loader.get_Y(),
+        batch_size=config["batch_size"],
+        shuffle=True,
+        epochs=config["epoch"],
+        callbacks=callbacks,
+        steps_per_epoch=steps_per_epoch,
     )
 
 
@@ -139,7 +146,6 @@ if __name__ == "__main__":
     config["data_root"] = args.root
 
     train()
-
 
 
 
