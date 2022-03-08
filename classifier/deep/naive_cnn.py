@@ -14,6 +14,7 @@ config = {
     "batch_size": 32,
     "epoch": 50,
     "lr": 1e-3,
+    "saved_model": "save_at_50.h5",
 }
 
 
@@ -134,20 +135,26 @@ def train():
     )
 
 
-def predict():
-    pass
+def predict(img):
+    model = keras.models.load_model(config["saved_model"])
+    try:
+        img = cv2.resize(img, (200, 160))
+    except Exception as e:
+        print(e)
+    result = model.predict(img)
+    return result
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--root", default="F:/CarLogo/crawler/chelogo/")
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument("--root", default="F:/CarLogo/crawler/chelogo/")
+    # args = parser.parse_args()
+    #
+    # config["data_root"] = args.root
+    #
+    # train()
 
-    config["data_root"] = args.root
-
-    train()
-
-
-
-
+    img = plt.imread("/data/klhao/CarLogo/crawler/chelogo/宝马/logo.jpg")
+    result = predict(img)
+    print(result)
 
