@@ -11,9 +11,10 @@ import numpy as np
 
 
 config = {
-    "batch_size": 32,
+    "data_root": "F:/CarLogo/crawler/chelogo/",
+    "batch_size": 300,
     "epoch": 50,
-    "lr": 1e-3,
+    "lr": 1e-4,
     "saved_model": "save_at_50.h5",
 }
 
@@ -115,6 +116,10 @@ def make_model(input_shape, num_classes):
 def train():
     loader = BasicLoader(config["data_root"], config["batch_size"])
     model = make_model(input_shape=(160, 200, 3), num_classes=loader.get_num_class())
+    try:
+        model = keras.models.load_model(config["saved_model"])
+    except:
+        pass
     callbacks = [
         keras.callbacks.ModelCheckpoint("save_at_{epoch}.h5"),
     ]
@@ -135,26 +140,49 @@ def train():
     )
 
 
-def predict(img):
+def predict(img_path):
     model = keras.models.load_model(config["saved_model"])
     try:
-        img = cv2.resize(img, dsize=(200, 160))
+        img = plt.imread(img_path)
+        if len(img) == 2:
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+        if img.shape != (160, 200, 3):
+            img = cv2.resize(img, dsize=(200, 160))
     except Exception as e:
         print(e)
-    result = model.predict(img)
+        return []
+    logits = model.predict(np.asarray([img]))
+    id2label = get_label()
+    result = [id2label[i] for i in np.argmax(logits, axis=1)]
     return result
 
 
-if __name__ == "__main__":
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument("--root", default="F:/CarLogo/crawler/chelogo/")
-    # args = parser.parse_args()
-    #
-    # config["data_root"] = args.root
-    #
-    # train()
+def get_label():
+    id2label = {}
+    i = 0
+    root = config["data_root"]
+    for d in os.listdir(root):
+        sub_dir = os.path.join(root, d)
+        if os.path.isfile(sub_dir):
+            continue
+        id2label[i] = d
+        i += 1
+    return id2label
 
-    img = plt.imread("/data/klhao/CarLogo/crawler/chelogo/宝马/logo.jpg")
-    result = predict(img)
-    print(result)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root", default="")
+    parser.add_argument("--mode", default="train", choices=["train", "predict"])
+    parser.add_argument("--img", type=str)
+    args = parser.parse_args()
+
+    if args.root:
+        config["data_root"] = args.root
+
+    if args.mode == "train":
+        train()
+    else:
+        result = predict(args.img)
+        print(result)
 
