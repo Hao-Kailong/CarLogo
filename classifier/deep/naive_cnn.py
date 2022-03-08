@@ -138,7 +138,7 @@ def train():
 def predict(img):
     model = keras.models.load_model(config["saved_model"])
     try:
-        img = cv2.resize(img, (200, 160))
+        img = cv2.resize(img, dsize=(200, 160))
     except Exception as e:
         print(e)
     result = model.predict(img)
