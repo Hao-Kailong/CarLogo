@@ -28,21 +28,21 @@ def augment(path):
     padding = config["white"]
 
     capricious = A.Compose([
-        A.Flip(p=0.5),
-        A.Rotate(limit=180, border_mode=cv2.BORDER_CONSTANT, value=padding, p=0.5),
-        A.Affine(shear=(-20, 20), cval=padding, p=0.5),
-        A.Perspective(pad_mode=cv2.BORDER_CONSTANT, pad_val=padding, p=0.5),
+        # A.Flip(p=0.5),
+        # A.Rotate(limit=180, border_mode=cv2.BORDER_CONSTANT, value=padding, p=0.5),
+        # A.Affine(shear=(-20, 20), cval=padding, p=0.5),
+        # A.Perspective(pad_mode=cv2.BORDER_CONSTANT, pad_val=padding, p=0.5),
         A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.5),
-        A.HueSaturationValue(hue_shift_limit=1, p=0.5),
+        # A.HueSaturationValue(hue_shift_limit=1, p=0.5),
         A.Emboss(p=0.5),
         A.CLAHE(clip_limit=100, p=0.5),
         A.GaussianBlur(p=0.5),
         A.GaussNoise(p=0.5),
-        A.RandomFog(fog_coef_lower=0.1, fog_coef_upper=0.5, p=0.3),
-        A.RandomRain(p=0.3),
+        A.RandomFog(fog_coef_lower=0.1, fog_coef_upper=0.5, p=0.5),
+        A.RandomRain(p=0.5),
     ])
     results = []
-    for i in range(100):
+    for i in range(500):
         try:
             one = capricious(image=image)["image"]
             results.append(one)
@@ -58,7 +58,7 @@ def main(root):
             continue
         for f in os.listdir(d):
             f = os.path.join(d, f)
-            if os.path.isfile(f) and f.endswith(".jpg") and "albumentations" not in f:  # 图片
+            if os.path.isfile(f) and f.endswith("logo.jpg"):  # 图片
                 augment(f)
                 print("{} processed.".format(f))
 
@@ -75,5 +75,6 @@ def delete(root):
 
 
 if __name__ == "__main__":
-    main("F:/CarLogo/crawler/chelogo")
-    # delete("F:/CarLogo/crawler/chelogo")
+    # main("F:/CarLogo/trail")
+    # delete("F:/CarLogo/trail")
+    main("F:/Dataset/CommonCar/chelogo")
