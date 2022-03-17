@@ -51,6 +51,8 @@ def load_data(validation_split=0.2):
                 image = plt.imread(path)
                 if len(image.shape) == 2:
                     image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+                if image.shape[-1] == 4:
+                    image = image[:, :, :3]
                 image = cv2.resize(image, dsize=config["image_size"])
                 image = np.expand_dims(image, axis=0)
                 image = preprocess_input(image)
@@ -58,8 +60,6 @@ def load_data(validation_split=0.2):
                 Y.append(one_hot(i))
         i += 1
         print("{} loaded.".format(d))
-        if i == 1:
-            break
     return np.vstack(X), np.asarray(Y)
 
 
