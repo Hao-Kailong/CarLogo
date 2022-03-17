@@ -53,14 +53,14 @@ def augment(path):
 
 def main(root):
     for d in os.listdir(root):
-        d = os.path.join(root, d)
-        if not os.path.isdir(d):  # 文件夹
+        dir = os.path.join(root, d)
+        if not os.path.isdir(dir):  # 文件夹
             continue
-        for f in os.listdir(d):
-            f = os.path.join(d, f)
-            if os.path.isfile(f) and f.endswith("logo.jpg"):  # 图片
-                augment(f)
-                print("{} processed.".format(f))
+        for f in os.listdir(dir):
+            path = os.path.join(dir, f)
+            if os.path.isfile(path) and f == "logo.jpg":  # 图片
+                augment(path)
+                print("{} processed.".format(d))
 
 
 def delete(root):
@@ -78,3 +78,6 @@ if __name__ == "__main__":
     # main("F:/CarLogo/trail")
     # delete("F:/CarLogo/trail")
     main("F:/Dataset/CommonCar/chelogo")
+    # delete("F:/Dataset/CommonCar/chelogo")
+
+
