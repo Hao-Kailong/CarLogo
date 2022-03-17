@@ -2,10 +2,12 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.applications.vgg19 import VGG19
 from tensorflow.keras.applications.vgg19 import preprocess_input
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.models import Model
 
 
 config = {
-    "data_root": "F:/Dataset/CommonCar/chelogo",
+    "data_root": "/data/klhao/CommonCar/chelogo",
     "batch_size": 256,
     "seed": 2022,
     "image_size": (224, 224),
@@ -26,15 +28,15 @@ data = keras.utils.image_dataset_from_directory(
 
 
 def run_finetune():
-    model = VGG19(
-        include_top=True,
+    base_model = VGG19(
+        include_top=False,
         weights="imagenet",
         input_shape=config["input_shape"],
         pooling="max",
-        classes=config["classes"],
-        classifier_activation="softmax",
     )
-
+    x = base_model.output  # (None, 512)
+    output = Dense(config["classes"], activation="softmax")(x)
+    model = Model(inputs=base_model.input, outputs=output)
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics="accuracy")
     model.fit(data, epochs=10)
 
