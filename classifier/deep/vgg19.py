@@ -12,7 +12,7 @@ import numpy as np
 
 config = {
     "data_root": "/data/klhao/CommonCar/chelogo",
-    "batch_size": 256,
+    "batch_size": 128,
     "seed": 2022,
     "image_size": (224, 224),
     "input_shape": (224, 224, 3),
